@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Object Tracking in Videos — MATLAB</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #1f6feb;
+    --accent-hover: #388bfd;
+    --green: #3fb950;
+    --yellow: #d29922;
+    --purple: #a371f7;
+    --red: #f85149;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 24px 32px;
+  }
+
+  header h1 { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+  header p { font-size: 14px; color: var(--muted); max-width: 720px; line-height: 1.6; margin-top: 6px; }
+
+  header .links {
+    margin-top: 12px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  header .links a {
+    font-size: 13px;
+    color: var(--accent-hover);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 4px 12px;
+    border-radius: 6px;
+    transition: background 0.15s;
+  }
+
+  header .links a:hover { background: var(--border); }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+  .section-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Video grid */
+  .video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    margin-bottom: 48px;
+  }
+
+  .video-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .video-card video {
+    width: 100%;
+    display: block;
+    background: #000;
+  }
+
+  .video-card .video-meta {
+    padding: 14px 16px;
+  }
+
+  .video-card .video-meta h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .video-card .video-meta p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-bottom: 6px;
+  }
+
+  .badge-blue  { background: rgba(56, 139, 253, 0.15); color: var(--accent-hover); border: 1px solid rgba(56,139,253,0.3); }
+  .badge-green { background: rgba(63, 185, 80, 0.15);  color: var(--green);         border: 1px solid rgba(63,185,80,0.3); }
+  .badge-purple{ background: rgba(163, 113, 247, 0.15);color: var(--purple);        border: 1px solid rgba(163,113,247,0.3); }
+
+  /* Algorithm comparison */
+  .algo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 48px;
+  }
+
+  @media (max-width: 700px) {
+    .algo-grid { grid-template-columns: 1fr; }
+  }
+
+  .algo-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+  }
+
+  .algo-card h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+
+  .algo-card p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.65;
+    margin-bottom: 12px;
+  }
+
+  .algo-card .param-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    padding: 6px 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .algo-card .param-row:first-of-type { border-top: none; margin-top: 8px; }
+
+  .param-label { color: var(--muted); }
+  .param-value { font-weight: 600; font-family: 'SFMono-Regular', Consolas, monospace; }
+
+  /* Pseudocode block */
+  .code-block {
+    background: #010409;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 20px;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: #c9d1d9;
+    overflow-x: auto;
+    margin-top: 12px;
+  }
+
+  .code-block .kw  { color: #ff7b72; }
+  .code-block .cm  { color: var(--muted); font-style: italic; }
+  .code-block .num { color: #79c0ff; }
+  .code-block .fn  { color: #d2a8ff; }
+
+  /* Key difference callout */
+  .callout {
+    background: rgba(163, 113, 247, 0.08);
+    border: 1px solid rgba(163, 113, 247, 0.25);
+    border-radius: 8px;
+    padding: 16px 20px;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.65;
+    margin-bottom: 48px;
+  }
+
+  .callout strong { color: var(--purple); }
+
+  /* Stack table */
+  .stack-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-bottom: 48px;
+  }
+
+  .stack-table th {
+    text-align: left;
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .stack-table td {
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    line-height: 1.5;
+  }
+
+  .stack-table tr:hover td { background: var(--surface); }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 20px 32px;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  footer a { color: var(--accent-hover); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="section-label" style="margin-bottom:6px">Computer Vision · MATLAB</p>
+  <h1>Object Tracking in Videos</h1>
+  <p>Tracks a moving car across video frames by finding where a bounding box from one frame best matches the next — using two algorithms: one for simple translation and a more sophisticated one that handles objects that rotate, scale, or shear as they move.</p>
+  <div class="links">
+    <a href="https://github.com/Halkhoori2000/Tracking-Objects-in-Videos" target="_blank">GitHub →</a>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Results -->
+  <h2>Tracking Results</h2>
+  <div class="video-grid">
+
+    <div class="video-card">
+      <video controls preload="metadata" loop>
+        <source src="results/car.mp4" type="video/mp4">
+      </video>
+      <div class="video-meta">
+        <div class="badge badge-blue">Original</div>
+        <h3>Car Video Sequence</h3>
+        <p>Source footage — 261 frames of a car in motion. This is the input to both trackers.</p>
+      </div>
+    </div>
+
+    <div class="video-card">
+      <video controls preload="metadata" loop>
+        <source src="results/lk_tracking.mp4" type="video/mp4">
+      </video>
+      <div class="video-meta">
+        <div class="badge badge-green">LK Tracker</div>
+        <h3>Lucas-Kanade (Translation)</h3>
+        <p>Forward-additive LK estimates the (u, v) pixel translation that minimises intensity difference between frames. Yellow bounding box follows the car.</p>
+      </div>
+    </div>
+
+    <div class="video-card">
+      <video controls preload="metadata" loop>
+        <source src="results/mb_tracking.mp4" type="video/mp4">
+      </video>
+      <div class="video-meta">
+        <div class="badge badge-purple">IC-LK Tracker</div>
+        <h3>Matthews-Baker Inverse Compositional (Affine)</h3>
+        <p>Extends LK to a full 6-parameter affine warp — handles rotation, scale, and shear. Precomputes the Jacobian and Hessian on the template once, making each frame update cheaper.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Algorithm comparison -->
+  <h2>Algorithm Comparison</h2>
+  <div class="algo-grid">
+
+    <div class="algo-card">
+      <h3>Lucas-Kanade — Forward Additive</h3>
+      <p>Iteratively estimates the (u, v) translation that minimises the sum of squared intensity differences between the template patch and the warped current frame. Uses Gauss-Newton updates — each iteration recomputes the image gradients at the current warp.</p>
+      <div class="code-block">
+<span class="cm">% Given: template T, current frame I, bounding box</span>
+<span class="kw">Initialise:</span> u = <span class="num">0</span>, v = <span class="num">0</span>
+
+<span class="kw">Repeat</span> until |Δp| &lt; ε:
+  <span class="num">1</span>. Warp I → aligned coords:  I_w(x) = I(x + [u,v])
+  <span class="num">2</span>. Image gradients:           [Ix, Iy] at warped coords
+  <span class="num">3</span>. Steepest descent:           A = [Ix, Iy]
+  <span class="num">4</span>. Gauss-Newton update:        Δp = (AᵀA)⁻¹ Aᵀ (T − I_w)
+  <span class="num">5</span>. Update warp:               [u, v] += [Δu, Δv]
+      </div>
+      <div class="param-row">
+        <span class="param-label">Parameters</span>
+        <span class="param-value">2 (u, v translation)</span>
+      </div>
+      <div class="param-row">
+        <span class="param-label">Jacobian recomputed</span>
+        <span class="param-value">Every iteration</span>
+      </div>
+      <div class="param-row">
+        <span class="param-label">Handles</span>
+        <span class="param-value">Translation only</span>
+      </div>
+    </div>
+
+    <div class="algo-card">
+      <h3>Matthews-Baker — Inverse Compositional</h3>
+      <p>Extends tracking to a full 6-parameter affine warp. The key insight: move the expensive Jacobian and Hessian computation to the template, which never changes — so they are computed once at initialisation and reused every frame. Only the image warp is recomputed per frame.</p>
+      <div class="code-block">
+<span class="cm">% Precompute once on template T:</span>
+J = ∇T · dW/dp     <span class="cm">% Jacobian, 6-param affine</span>
+H⁻¹ = (JᵀJ)⁻¹
+
+<span class="cm">% Per frame (cheap):</span>
+<span class="num">1</span>. Warp current image:   I_w = I(W(x; p))
+<span class="num">2</span>. Compute update:       Δp = H⁻¹ Jᵀ (I_w − T)
+<span class="num">3</span>. Compose warp:         W ← W · W(Δp)⁻¹
+      </div>
+      <div class="param-row">
+        <span class="param-label">Parameters</span>
+        <span class="param-value">6 (affine warp)</span>
+      </div>
+      <div class="param-row">
+        <span class="param-label">Jacobian recomputed</span>
+        <span class="param-value">Once (on template)</span>
+      </div>
+      <div class="param-row">
+        <span class="param-label">Handles</span>
+        <span class="param-value">Translation, rotation, scale, shear</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="callout">
+    <strong>Key difference:</strong> In standard LK, the warp update is additive (p ← p + Δp) so the Jacobian must be recomputed at the new warp each iteration. In the Matthews-Baker formulation, the update is <em>compositional</em> (W ← W · W(Δp)⁻¹) and evaluated at the identity, meaning the Jacobian only depends on the fixed template — making each tracking iteration significantly cheaper at the cost of a one-time precomputation.
+  </div>
+
+  <!-- Tech stack -->
+  <h2>Tech Stack</h2>
+  <table class="stack-table">
+    <thead>
+      <tr><th>Item</th><th>Detail</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Language</td><td>MATLAB</td></tr>
+      <tr><td>Algorithms</td><td>Lucas-Kanade forward-additive (translation), Matthews-Baker IC-LK (affine)</td></tr>
+      <tr><td>Libraries</td><td>None — all tracker logic implemented from scratch</td></tr>
+      <tr><td>Input</td><td>Car video sequence (261 frame-by-frame JPEGs)</td></tr>
+      <tr><td>Output</td><td>Tracked bounding box overlaid on video, saved as AVI / MP4</td></tr>
+    </tbody>
+  </table>
+
+</div>
+
+<footer>
+  Object Tracking in Videos — MATLAB &nbsp;·&nbsp;
+  <a href="https://github.com/Halkhoori2000/Tracking-Objects-in-Videos" target="_blank">GitHub</a>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,13 @@
+# MATLAB generated
+*.asv
+*.m~
+*.mlx
+*.fig
+*.mex*
+
+# Large input frame sequences (provide separately to run)
+data/
+
+# OS
+.DS_Store
+Thumbs.db
