@@ -1,5 +1,7 @@
 # Object Tracking in Videos — MATLAB
 
+*CMPEN 454 — Fundamentals of Computer Vision · The Pennsylvania State University · 2022*
+
 Tracks a moving object across video frames by finding where a bounding box from one frame best matches the next. Two trackers are implemented — one that handles simple translation, and a more sophisticated one that handles objects that rotate, scale, or shear as they move. The result is a yellow bounding box that follows the car across the full video sequence.
 
 Implemented in MATLAB from scratch using the Lucas-Kanade (LK) and Matthews-Baker Inverse Compositional (IC-LK) algorithms. LK iteratively estimates the (u, v) pixel translation that minimises the intensity difference between a template patch and the current frame using Gauss-Newton updates. The Matthews-Baker variant extends this to a full 6-parameter affine warp and precomputes the Jacobian and Hessian inverse on the template once, making each tracking iteration significantly cheaper since only the image warp is recomputed per frame.
