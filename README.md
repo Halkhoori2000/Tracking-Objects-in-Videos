@@ -102,5 +102,5 @@ mb_demo    % Matthews-Baker tracker → results/car_mb_2.avi
 
 ## Course
 
-TBD  
-The Pennsylvania State University
+CMPEN 454 — Fundamentals of Computer Vision  
+The Pennsylvania State University · 2022
