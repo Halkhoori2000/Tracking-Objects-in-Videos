@@ -8,6 +8,8 @@ Implemented in MATLAB from scratch using the Lucas-Kanade (LK) and Matthews-Bake
 
 **[Live Demo →](https://halkhoori2000.github.io/Tracking-Objects-in-Videos/)**
 
+📄 **[Project Report](docs/project-report.docx)** — the original write-up (method, derivations, results)
+
 ---
 
 ## Use Cases
